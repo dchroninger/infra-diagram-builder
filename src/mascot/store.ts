@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 import { create } from 'zustand'
 
 export type MascotSlot = 'launch' | 'canvas-center' | 'props-footer'
@@ -48,11 +48,11 @@ export function useMascot() {
 }
 
 export function useMascotAnchor(slot: MascotSlot) {
-  const ref = useRef<HTMLDivElement>(null)
   const registerAnchor = useMascotStore((s) => s.registerAnchor)
-  useEffect(() => {
-    registerAnchor(slot, ref.current)
-    return () => registerAnchor(slot, null)
-  }, [slot, registerAnchor])
-  return ref
+  return useCallback(
+    (el: HTMLDivElement | null) => {
+      registerAnchor(slot, el)
+    },
+    [slot, registerAnchor],
+  )
 }
