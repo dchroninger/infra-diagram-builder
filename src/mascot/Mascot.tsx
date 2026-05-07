@@ -12,6 +12,12 @@ const HOP_SHORT_THRESHOLD = 400
 const HOP_BASE_MS = 350
 const HOP_PEAK = 80
 
+const FLOAT_DY_THRESHOLD = -50
+const FLOAT_BASE_MS = 700
+const FLOAT_SWAY = 6
+const LAND_MS = 380
+const LAND_HOP_PEAK = 14
+
 const REACTION_DURATIONS: Record<ReactionKind, number> = {
   happy: 600,
   wink: 200,
@@ -38,18 +44,16 @@ export function Mascot() {
   const [scale, setScale] = useState({ x: 1, y: 1 })
   const [sleepy, setSleepy] = useState(false)
 
+  type Anim =
+    | { kind: 'hop'; from: { x: number; y: number }; to: { x: number; y: number }; startTime: number; duration: number; count: number }
+    | { kind: 'float'; from: { x: number; y: number }; to: { x: number; y: number }; startTime: number; duration: number }
+
   const sr = useRef({
     target: { x: 0, y: 0 },
     eyeNow: { x: 0, y: 0 },
     mouthNow: { x: 0, y: 0 },
     pos: null as Pos | null,
-    hop: null as null | {
-      from: { x: number; y: number }
-      to: { x: number; y: number }
-      startTime: number
-      duration: number
-      count: number
-    },
+    anim: null as Anim | null,
   })
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -78,13 +82,25 @@ export function Mascot() {
       return
     }
 
-    const numHops = distance < HOP_SHORT_THRESHOLD ? 1 : Math.ceil(distance / 350)
-    sr.current.hop = {
-      from: { x: from.x, y: from.y },
-      to: { x: target.x, y: target.y },
-      startTime: performance.now(),
-      duration: numHops * HOP_BASE_MS,
-      count: numHops,
+    const dy = target.y - from.y
+    if (dy < FLOAT_DY_THRESHOLD) {
+      sr.current.anim = {
+        kind: 'float',
+        from: { x: from.x, y: from.y },
+        to: { x: target.x, y: target.y },
+        startTime: performance.now(),
+        duration: Math.max(FLOAT_BASE_MS, distance * 1.2) + LAND_MS,
+      }
+    } else {
+      const numHops = distance < HOP_SHORT_THRESHOLD ? 1 : Math.ceil(distance / 350)
+      sr.current.anim = {
+        kind: 'hop',
+        from: { x: from.x, y: from.y },
+        to: { x: target.x, y: target.y },
+        startTime: performance.now(),
+        duration: numHops * HOP_BASE_MS,
+        count: numHops,
+      }
     }
     sr.current.pos = { x: from.x, y: from.y, size }
   }, [activeAnchor, reducedMotion])
@@ -125,24 +141,46 @@ export function Mascot() {
     const tick = () => {
       const cur = sr.current
 
-      if (cur.hop && cur.pos) {
-        const t = (performance.now() - cur.hop.startTime) / cur.hop.duration
+      if (cur.anim && cur.pos) {
+        const elapsed = performance.now() - cur.anim.startTime
+        const t = elapsed / cur.anim.duration
         if (t >= 1) {
-          cur.pos = { x: cur.hop.to.x, y: cur.hop.to.y, size: cur.pos.size }
-          cur.hop = null
+          cur.pos = { x: cur.anim.to.x, y: cur.anim.to.y, size: cur.pos.size }
+          cur.anim = null
           setPos({ ...cur.pos })
           setScale({ x: 1, y: 1 })
-        } else {
+        } else if (cur.anim.kind === 'hop') {
           const ease = easeOutCubic(t)
-          const baseX = cur.hop.from.x + (cur.hop.to.x - cur.hop.from.x) * ease
-          const baseY = cur.hop.from.y + (cur.hop.to.y - cur.hop.from.y) * ease
-          const hopT = (t * cur.hop.count) % 1
+          const baseX = cur.anim.from.x + (cur.anim.to.x - cur.anim.from.x) * ease
+          const baseY = cur.anim.from.y + (cur.anim.to.y - cur.anim.from.y) * ease
+          const hopT = (t * cur.anim.count) % 1
           const arc = -HOP_PEAK * Math.sin(Math.PI * hopT)
           const sy = hopScale(hopT)
           const sx = 1 / Math.sqrt(sy)
           cur.pos = { x: baseX, y: baseY + arc, size: cur.pos.size }
           setPos({ ...cur.pos })
           setScale({ x: sx, y: sy })
+        } else {
+          const totalDur = cur.anim.duration
+          const floatDur = totalDur - LAND_MS
+          if (elapsed < floatDur) {
+            const ft = elapsed / floatDur
+            const ease = easeInOutCubic(ft)
+            const baseX = cur.anim.from.x + (cur.anim.to.x - cur.anim.from.x) * ease
+            const baseY = cur.anim.from.y + (cur.anim.to.y - cur.anim.from.y) * ease
+            const sway = FLOAT_SWAY * Math.sin(ft * Math.PI * 2) * (1 - ft)
+            cur.pos = { x: baseX + sway, y: baseY, size: cur.pos.size }
+            setPos({ ...cur.pos })
+            setScale({ x: 1, y: 1 })
+          } else {
+            const lt = (elapsed - floatDur) / LAND_MS
+            const sy = hopScale(lt)
+            const sx = 1 / Math.sqrt(sy)
+            const landY = -LAND_HOP_PEAK * Math.sin(Math.PI * lt)
+            cur.pos = { x: cur.anim.to.x, y: cur.anim.to.y + landY, size: cur.pos.size }
+            setPos({ ...cur.pos })
+            setScale({ x: sx, y: sy })
+          }
         }
       } else if (cur.pos && bobbing.current) {
         const bobY = -8 * Math.sin(performance.now() / 700)
@@ -173,7 +211,7 @@ export function Mascot() {
 
   useEffect(() => {
     const onResize = () => {
-      if (sr.current.hop || !activeAnchor) return
+      if (sr.current.anim || !activeAnchor) return
       const r = activeAnchor.getBoundingClientRect()
       sr.current.pos = {
         x: r.left + r.width / 2,
@@ -217,6 +255,10 @@ export function Mascot() {
 
 function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3)
+}
+
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
 
 function hopScale(hopT: number): number {
