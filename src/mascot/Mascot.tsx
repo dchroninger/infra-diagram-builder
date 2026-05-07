@@ -18,6 +18,12 @@ const FLOAT_SWAY = 6
 const LAND_MS = 380
 const LAND_HOP_PEAK = 14
 
+const BLINK_MIN_MS = 2500
+const BLINK_MAX_MS = 6500
+const BLINK_CLOSED_MS = 120
+const DOUBLE_BLINK_CHANCE = 0.12
+const DOUBLE_BLINK_GAP_MS = 90
+
 const REACTION_DURATIONS: Record<ReactionKind, number> = {
   happy: 600,
   wink: 200,
@@ -43,6 +49,7 @@ export function Mascot() {
   const [mouth, setMouth] = useState({ x: 0, y: 0 })
   const [scale, setScale] = useState({ x: 1, y: 1 })
   const [sleepy, setSleepy] = useState(false)
+  const [blinking, setBlinking] = useState(false)
 
   type Anim =
     | { kind: 'hop'; from: { x: number; y: number }; to: { x: number; y: number }; startTime: number; duration: number; count: number }
@@ -231,6 +238,31 @@ export function Mascot() {
     return () => window.clearTimeout(t)
   }, [reaction, clearReaction])
 
+  useEffect(() => {
+    let nextId: number | null = null
+    let openId: number | null = null
+    const blink = () => {
+      setBlinking(true)
+      openId = window.setTimeout(() => {
+        setBlinking(false)
+        if (Math.random() < DOUBLE_BLINK_CHANCE) {
+          openId = window.setTimeout(blink, DOUBLE_BLINK_GAP_MS)
+        } else {
+          schedule()
+        }
+      }, BLINK_CLOSED_MS)
+    }
+    const schedule = () => {
+      const delay = BLINK_MIN_MS + Math.random() * (BLINK_MAX_MS - BLINK_MIN_MS)
+      nextId = window.setTimeout(blink, delay)
+    }
+    schedule()
+    return () => {
+      if (nextId != null) window.clearTimeout(nextId)
+      if (openId != null) window.clearTimeout(openId)
+    }
+  }, [])
+
   if (!pos) return null
 
   return (
@@ -248,7 +280,7 @@ export function Mascot() {
         zIndex: 9999,
       }}
     >
-      <CloudFace size={pos.size} eyes={eyes} mouth={mouth} sleepy={sleepy} reaction={reaction?.kind ?? null} />
+      <CloudFace size={pos.size} eyes={eyes} mouth={mouth} sleepy={sleepy} blinking={blinking} reaction={reaction?.kind ?? null} />
     </div>
   )
 }
@@ -273,11 +305,13 @@ interface CloudFaceProps {
   eyes: { x: number; y: number }
   mouth: { x: number; y: number }
   sleepy: boolean
+  blinking: boolean
   reaction: ReactionKind | null
 }
 
-function CloudFace({ size, eyes, mouth, sleepy, reaction }: CloudFaceProps) {
+function CloudFace({ size, eyes, mouth, sleepy, blinking, reaction }: CloudFaceProps) {
   const showBlush = reaction === 'blush'
+  const eyesClosed = sleepy || blinking
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ overflow: 'visible' }}>
       <path
@@ -297,27 +331,32 @@ function CloudFace({ size, eyes, mouth, sleepy, reaction }: CloudFaceProps) {
           <path d="M41 41 l4 -2" />
         </g>
       )}
-      {sleepy ? (
+      {eyesClosed ? (
         <>
           <path d="M21 34 Q 24 37 27 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
           <path d="M37 34 Q 40 37 43 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-          <path d="M28 40 Q 32 41 36 40" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.8" />
-          <text className="kn-cloud-z kn-cloud-z1" x="50" y="20" fill="var(--accent)" fontSize="9" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
-          <text className="kn-cloud-z kn-cloud-z2" x="56" y="12" fill="var(--accent)" fontSize="6" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
         </>
       ) : (
         <>
           <circle cx={24 + eyes.x} cy={34 + eyes.y} r="2" fill="var(--accent)" />
           <circle cx={40 + eyes.x} cy={34 + eyes.y} r="2" fill="var(--accent)" />
-          <path
-            d="M28 39 Q 32 42 36 39"
-            transform={`translate(${mouth.x} ${mouth.y})`}
-            stroke="var(--accent)"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            fill="none"
-          />
         </>
+      )}
+      {sleepy ? (
+        <>
+          <path d="M28 40 Q 32 41 36 40" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.8" />
+          <text className="kn-cloud-z kn-cloud-z1" x="50" y="20" fill="var(--accent)" fontSize="9" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
+          <text className="kn-cloud-z kn-cloud-z2" x="56" y="12" fill="var(--accent)" fontSize="6" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
+        </>
+      ) : (
+        <path
+          d="M28 39 Q 32 42 36 39"
+          transform={`translate(${mouth.x} ${mouth.y})`}
+          stroke="var(--accent)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          fill="none"
+        />
       )}
     </svg>
   )
