@@ -543,7 +543,7 @@ export function Editor({ diagram, brand, theme, toggleTheme, crumbs, onBack, onC
             {Object.keys(nodes).length === 0 && (
               <div className="kn-empty-canvas">
                 <div className="kn-empty-cloud">
-                  <CloudGlyph size={64} />
+                  <CloudGlyph size={84} interactive />
                 </div>
                 <h3>start by dragging a node</h3>
                 <p>pick anything from the left palette, or right-click to add</p>

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { BrandName } from '../types'
 
 export const IconSun = () => (
@@ -26,9 +27,50 @@ export const IconSearch = () => (
   </svg>
 )
 
-export function CloudGlyph({ size = 32 }: { size?: number }) {
+interface CloudGlyphProps {
+  size?: number
+  interactive?: boolean
+}
+
+const IDLE_MS = 20000
+const PUPIL_MAX = 2
+const TRACK_RANGE = 220
+
+export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [pupil, setPupil] = useState({ x: 0, y: 0 })
+  const [sleepy, setSleepy] = useState(false)
+
+  useEffect(() => {
+    if (!interactive) return
+    let idleId: number | null = null
+    const arm = () => {
+      if (idleId != null) window.clearTimeout(idleId)
+      idleId = window.setTimeout(() => setSleepy(true), IDLE_MS)
+    }
+    const onMove = (e: MouseEvent) => {
+      setSleepy(false)
+      arm()
+      const svg = svgRef.current
+      if (!svg) return
+      const r = svg.getBoundingClientRect()
+      const dx = e.clientX - (r.left + r.width / 2)
+      const dy = e.clientY - (r.top + r.height / 2)
+      const dist = Math.hypot(dx, dy)
+      const k = Math.min(dist, TRACK_RANGE) / TRACK_RANGE
+      const a = Math.atan2(dy, dx)
+      setPupil({ x: Math.cos(a) * PUPIL_MAX * k, y: Math.sin(a) * PUPIL_MAX * k })
+    }
+    arm()
+    window.addEventListener('mousemove', onMove)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      if (idleId != null) window.clearTimeout(idleId)
+    }
+  }, [interactive])
+
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+    <svg ref={svgRef} width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ overflow: 'visible' }}>
       <path
         d="M18 44 C 8 44 6 30 16 28 C 16 18 28 14 34 22 C 42 16 54 22 52 32 C 60 32 60 44 50 44 Z"
         fill="var(--accent-soft)"
@@ -36,9 +78,21 @@ export function CloudGlyph({ size = 32 }: { size?: number }) {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <circle cx="24" cy="34" r="2" fill="var(--accent)" />
-      <circle cx="40" cy="34" r="2" fill="var(--accent)" />
-      <path d="M28 39 Q 32 42 36 39" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      {sleepy ? (
+        <>
+          <path d="M21 34 Q 24 37 27 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          <path d="M37 34 Q 40 37 43 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          <path d="M28 40 Q 32 41 36 40" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.8" />
+          <text className="kn-cloud-z kn-cloud-z1" x="50" y="20" fill="var(--accent)" fontSize="9" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
+          <text className="kn-cloud-z kn-cloud-z2" x="56" y="12" fill="var(--accent)" fontSize="6" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
+        </>
+      ) : (
+        <>
+          <circle cx={24 + pupil.x} cy={34 + pupil.y} r="2" fill="var(--accent)" />
+          <circle cx={40 + pupil.x} cy={34 + pupil.y} r="2" fill="var(--accent)" />
+          <path d="M28 39 Q 32 42 36 39" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+        </>
+      )}
     </svg>
   )
 }
