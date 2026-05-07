@@ -34,16 +34,25 @@ interface CloudGlyphProps {
 
 const IDLE_MS = 20000
 const PUPIL_MAX = 2
-const TRACK_RANGE = 220
+const MOUTH_MAX = 6.4
+const ACTIVE_RADIUS = 280
+const EYE_LERP = 0.35
+const MOUTH_LERP = 0.09
 
 export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) {
   const svgRef = useRef<SVGSVGElement>(null)
-  const [pupil, setPupil] = useState({ x: 0, y: 0 })
+  const [eyes, setEyes] = useState({ x: 0, y: 0 })
+  const [mouth, setMouth] = useState({ x: 0, y: 0 })
   const [sleepy, setSleepy] = useState(false)
 
   useEffect(() => {
     if (!interactive) return
+    const target = { x: 0, y: 0 }
+    const eyeNow = { x: 0, y: 0 }
+    const mouthNow = { x: 0, y: 0 }
     let idleId: number | null = null
+    let rafId: number | null = null
+
     const arm = () => {
       if (idleId != null) window.clearTimeout(idleId)
       idleId = window.setTimeout(() => setSleepy(true), IDLE_MS)
@@ -57,15 +66,39 @@ export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) 
       const dx = e.clientX - (r.left + r.width / 2)
       const dy = e.clientY - (r.top + r.height / 2)
       const dist = Math.hypot(dx, dy)
-      const k = Math.min(dist, TRACK_RANGE) / TRACK_RANGE
+      if (dist > ACTIVE_RADIUS) {
+        target.x = 0
+        target.y = 0
+        return
+      }
+      const k = dist / ACTIVE_RADIUS
       const a = Math.atan2(dy, dx)
-      setPupil({ x: Math.cos(a) * PUPIL_MAX * k, y: Math.sin(a) * PUPIL_MAX * k })
+      target.x = Math.cos(a) * k
+      target.y = Math.sin(a) * k
     }
+    const onLeave = () => {
+      target.x = 0
+      target.y = 0
+    }
+    const tick = () => {
+      eyeNow.x += (target.x * PUPIL_MAX - eyeNow.x) * EYE_LERP
+      eyeNow.y += (target.y * PUPIL_MAX - eyeNow.y) * EYE_LERP
+      mouthNow.x += (target.x * MOUTH_MAX - mouthNow.x) * MOUTH_LERP
+      mouthNow.y += (target.y * MOUTH_MAX - mouthNow.y) * MOUTH_LERP
+      setEyes({ x: eyeNow.x, y: eyeNow.y })
+      setMouth({ x: mouthNow.x, y: mouthNow.y })
+      rafId = requestAnimationFrame(tick)
+    }
+
     arm()
     window.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseleave', onLeave)
+    rafId = requestAnimationFrame(tick)
     return () => {
       window.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseleave', onLeave)
       if (idleId != null) window.clearTimeout(idleId)
+      if (rafId != null) cancelAnimationFrame(rafId)
     }
   }, [interactive])
 
@@ -88,9 +121,16 @@ export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) 
         </>
       ) : (
         <>
-          <circle cx={24 + pupil.x} cy={34 + pupil.y} r="2" fill="var(--accent)" />
-          <circle cx={40 + pupil.x} cy={34 + pupil.y} r="2" fill="var(--accent)" />
-          <path d="M28 39 Q 32 42 36 39" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          <circle cx={24 + eyes.x} cy={34 + eyes.y} r="2" fill="var(--accent)" />
+          <circle cx={40 + eyes.x} cy={34 + eyes.y} r="2" fill="var(--accent)" />
+          <path
+            d="M28 39 Q 32 42 36 39"
+            transform={`translate(${mouth.x} ${mouth.y})`}
+            stroke="var(--accent)"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            fill="none"
+          />
         </>
       )}
     </svg>
