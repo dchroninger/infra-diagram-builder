@@ -25,12 +25,15 @@ const DOUBLE_BLINK_CHANCE = 0.12
 const DOUBLE_BLINK_GAP_MS = 90
 
 const REACTION_DURATIONS: Record<ReactionKind, number> = {
-  happy: 600,
+  happy: 500,
   wink: 200,
   surprised: 400,
   sad: 600,
   blush: 800,
 }
+
+const CLICK_HOP_PEAK = 22
+const CLICK_HOP_MS = 420
 
 interface Pos {
   x: number
@@ -43,6 +46,7 @@ export function Mascot() {
   const anchors = useMascotStore((s) => s.anchors)
   const reaction = useMascotStore((s) => s.reaction)
   const clearReaction = useMascotStore((s) => s.clearReaction)
+  const react = useMascotStore((s) => s.react)
 
   const [pos, setPos] = useState<Pos | null>(null)
   const [eyes, setEyes] = useState({ x: 0, y: 0 })
@@ -52,7 +56,7 @@ export function Mascot() {
   const [blinking, setBlinking] = useState(false)
 
   type Anim =
-    | { kind: 'hop'; from: { x: number; y: number }; to: { x: number; y: number }; startTime: number; duration: number; count: number }
+    | { kind: 'hop'; from: { x: number; y: number }; to: { x: number; y: number }; startTime: number; duration: number; count: number; peak: number }
     | { kind: 'float'; from: { x: number; y: number }; to: { x: number; y: number }; startTime: number; duration: number }
 
   const sr = useRef({
@@ -107,6 +111,7 @@ export function Mascot() {
         startTime: performance.now(),
         duration: numHops * HOP_BASE_MS,
         count: numHops,
+        peak: HOP_PEAK,
       }
     }
     sr.current.pos = { x: from.x, y: from.y, size }
@@ -161,7 +166,7 @@ export function Mascot() {
           const baseX = cur.anim.from.x + (cur.anim.to.x - cur.anim.from.x) * ease
           const baseY = cur.anim.from.y + (cur.anim.to.y - cur.anim.from.y) * ease
           const hopT = (t * cur.anim.count) % 1
-          const arc = -HOP_PEAK * Math.sin(Math.PI * hopT)
+          const arc = -cur.anim.peak * Math.sin(Math.PI * hopT)
           const sy = hopScale(hopT)
           const sx = 1 / Math.sqrt(sy)
           cur.pos = { x: baseX, y: baseY + arc, size: cur.pos.size }
@@ -239,6 +244,21 @@ export function Mascot() {
   }, [reaction, clearReaction])
 
   useEffect(() => {
+    if (reaction?.kind !== 'happy') return
+    const cur = sr.current
+    if (cur.anim || !cur.pos) return
+    cur.anim = {
+      kind: 'hop',
+      from: { x: cur.pos.x, y: cur.pos.y },
+      to: { x: cur.pos.x, y: cur.pos.y },
+      startTime: performance.now(),
+      duration: CLICK_HOP_MS,
+      count: 1,
+      peak: CLICK_HOP_PEAK,
+    }
+  }, [reaction])
+
+  useEffect(() => {
     let nextId: number | null = null
     let openId: number | null = null
     const blink = () => {
@@ -265,6 +285,11 @@ export function Mascot() {
 
   if (!pos) return null
 
+  const onClick = () => {
+    setSleepy(false)
+    react('happy')
+  }
+
   return (
     <div
       className="kn-mascot"
@@ -280,7 +305,12 @@ export function Mascot() {
         zIndex: 9999,
       }}
     >
-      <CloudFace size={pos.size} eyes={eyes} mouth={mouth} sleepy={sleepy} blinking={blinking} reaction={reaction?.kind ?? null} />
+      <div
+        onClick={onClick}
+        style={{ width: '100%', height: '100%', cursor: 'pointer', pointerEvents: 'auto' }}
+      >
+        <CloudFace size={pos.size} eyes={eyes} mouth={mouth} sleepy={sleepy} blinking={blinking} reaction={reaction?.kind ?? null} />
+      </div>
     </div>
   )
 }
@@ -311,7 +341,8 @@ interface CloudFaceProps {
 
 function CloudFace({ size, eyes, mouth, sleepy, blinking, reaction }: CloudFaceProps) {
   const showBlush = reaction === 'blush'
-  const eyesClosed = sleepy || blinking
+  const happy = reaction === 'happy'
+  const eyesClosed = !happy && (sleepy || blinking)
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ overflow: 'visible' }}>
       <path
@@ -331,7 +362,12 @@ function CloudFace({ size, eyes, mouth, sleepy, blinking, reaction }: CloudFaceP
           <path d="M41 41 l4 -2" />
         </g>
       )}
-      {eyesClosed ? (
+      {happy ? (
+        <>
+          <path d="M21 36 Q 24 32 27 36" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          <path d="M37 36 Q 40 32 43 36" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        </>
+      ) : eyesClosed ? (
         <>
           <path d="M21 34 Q 24 37 27 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
           <path d="M37 34 Q 40 37 43 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
@@ -348,6 +384,8 @@ function CloudFace({ size, eyes, mouth, sleepy, blinking, reaction }: CloudFaceP
           <text className="kn-cloud-z kn-cloud-z1" x="50" y="20" fill="var(--accent)" fontSize="9" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
           <text className="kn-cloud-z kn-cloud-z2" x="56" y="12" fill="var(--accent)" fontSize="6" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
         </>
+      ) : happy ? (
+        <path d="M27 39 Q 32 44 37 39" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
       ) : (
         <path
           d="M28 39 Q 32 42 36 39"
