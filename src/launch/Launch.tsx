@@ -52,11 +52,8 @@ export function Launch({ brand }: Props) {
     <div className="kn-launch">
       <aside className="kn-l-side">
         <div className="kn-l-brand">
-          <BrandMark brand={brand} size={28} />
-          <div>
-            <div className="kn-l-brand-name">{brand}</div>
-            <div className="kn-l-brand-sub">system design, but soft</div>
-          </div>
+          <BrandMark brand={brand} size={64} interactive />
+          <div className="kn-l-brand-name">{brand.toLowerCase()}</div>
         </div>
 
         <button className="kn-l-new" onClick={() => onCreate()}>

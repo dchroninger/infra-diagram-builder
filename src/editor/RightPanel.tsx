@@ -63,6 +63,9 @@ export function RightPanel({
           <LayersView nodes={nodes} edges={edges} selection={selection} setSelection={setSelection} />
         )}
       </div>
+      <div className="kn-rpanel-mascot">
+        <CloudGlyph size={64} interactive />
+      </div>
     </aside>
   )
 }
@@ -225,9 +228,6 @@ function PropertiesView({
   }
   return (
     <div className="kn-props-empty">
-      <div className="kn-props-empty-glyph">
-        <CloudGlyph size={40} />
-      </div>
       <h4>nothing selected</h4>
       <p>select a node or connection to edit its properties</p>
       <div className="kn-props-sect">Canvas</div>

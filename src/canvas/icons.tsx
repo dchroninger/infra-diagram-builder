@@ -137,7 +137,7 @@ export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) 
   )
 }
 
-export function BrandMark({ brand, size = 24 }: { brand: BrandName; size?: number }) {
+export function BrandMark({ brand, size = 24, interactive = false }: { brand: BrandName; size?: number; interactive?: boolean }) {
   if (brand === 'Mochi') {
     return (
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
@@ -159,7 +159,7 @@ export function BrandMark({ brand, size = 24 }: { brand: BrandName; size?: numbe
       </svg>
     )
   }
-  return <CloudGlyph size={size} />
+  return <CloudGlyph size={size} interactive={interactive} />
 }
 
 export function LockIcon() {
