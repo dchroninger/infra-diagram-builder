@@ -64,7 +64,9 @@ export function RightPanel({
           <LayersView nodes={nodes} edges={edges} selection={selection} setSelection={setSelection} />
         )}
       </div>
-      <div ref={mascotAnchor} className="kn-rpanel-mascot" />
+      <div className="kn-rpanel-mascot">
+        <div ref={mascotAnchor} className="kn-rpanel-mascot-anchor" />
+      </div>
     </aside>
   )
 }
