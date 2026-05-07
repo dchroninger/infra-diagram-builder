@@ -1,0 +1,186 @@
+/* ──────────────────────────────────────────────────────────────────
+   Kumo — design tokens
+   Catppuccin-inspired pastel palette. Mocha (dark) + Latte (light).
+   ────────────────────────────────────────────────────────────────── */
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* Type */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Radii — kawaii means big and soft */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* Spacing */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px;  --s-10: 40px;
+
+  /* Catppuccin pastel accents — shared between modes (slightly tuned per-mode below) */
+  --pink:    #f5bde6;
+  --mauve:   #c6a0f6;
+  --lavender:#b7bdf8;
+  --blue:    #8aadf4;
+  --sapphire:#7dc4e4;
+  --sky:     #91d7e3;
+  --teal:    #8bd5ca;
+  --green:   #a6da95;
+  --yellow:  #eed49f;
+  --peach:   #f5a97f;
+  --maroon:  #ee99a0;
+  --red:     #ed8796;
+  --flamingo:#f0c6c6;
+  --rosewater:#f4dbd6;
+}
+
+/* ── Dark (Mocha-inspired) — DEFAULT ─────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:           #1e1e2e;   /* base */
+  --bg-1:         #181825;   /* mantle */
+  --bg-0:         #11111b;   /* crust */
+  --surface-1:    #313244;
+  --surface-2:    #45475a;
+  --surface-3:    #585b70;
+  --overlay:      rgba(17, 17, 27, 0.6);
+
+  --text:         #cdd6f4;
+  --text-muted:   #a6adc8;
+  --text-subtle:  #7f849c;
+  --text-faint:   #585b70;
+
+  --border:       #45475a;
+  --border-soft:  #313244;
+  --border-strong:#6c7086;
+
+  /* Grid for canvas */
+  --grid-dot:     rgba(205, 214, 244, 0.22);
+  --grid-dot-strong: rgba(205, 214, 244, 0.34);
+
+  /* Default accent (mauve) */
+  --accent:       #c6a0f6;
+  --accent-soft:  rgba(198, 160, 246, 0.16);
+  --accent-ink:   #1e1e2e;
+
+  /* Node category colors (used by node glyphs + tags) */
+  --node-data:    #f5bde6; /* DB / cache → pink */
+  --node-service: #c6a0f6; /* service → mauve */
+  --node-net:     #8aadf4; /* network → blue */
+  --node-client:  #a6da95; /* client/user → green */
+  --node-server:  #f5a97f; /* server/host → peach */
+  --node-queue:   #eed49f; /* queue → yellow */
+  --node-edge:    #91d7e3; /* edge / cdn → sky */
+  --node-docker:  #7dc4e4; /* docker → sapphire */
+  --node-k8s:     #b7bdf8; /* k8s → lavender */
+  --node-group:   #b8c0e0; /* group → subtext */
+  --node-copilot: #8aadf4; /* copilot → blue */
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 8px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 0 0 1px var(--accent-soft), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Light (Latte-inspired) ──────────────────────────────────────── */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:           #eff1f5;   /* base */
+  --bg-1:         #e6e9ef;   /* mantle */
+  --bg-0:         #dce0e8;   /* crust */
+  --surface-1:    #ccd0da;
+  --surface-2:    #bcc0cc;
+  --surface-3:    #acb0be;
+  --overlay:      rgba(220, 224, 232, 0.7);
+
+  --text:         #4c4f69;
+  --text-muted:   #5c5f77;
+  --text-subtle:  #6c6f85;
+  --text-faint:   #9ca0b0;
+
+  --border:       #bcc0cc;
+  --border-soft:  #ccd0da;
+  --border-strong:#9ca0b0;
+
+  --grid-dot:     rgba(76, 79, 105, 0.25);
+  --grid-dot-strong: rgba(76, 79, 105, 0.38);
+
+  --accent:       #8839ef;        /* mauve */
+  --accent-soft:  rgba(136, 57, 239, 0.12);
+  --accent-ink:   #ffffff;
+
+  /* Latte-tuned node colors (slightly more saturated for legibility on light bg) */
+  --node-data:    #ea76cb; /* pink */
+  --node-service: #8839ef; /* mauve */
+  --node-net:     #1e66f5; /* blue */
+  --node-client:  #40a02b; /* green */
+  --node-server:  #fe640b; /* peach */
+  --node-queue:   #df8e1d; /* yellow */
+  --node-edge:    #04a5e5; /* sky */
+  --node-docker:  #209fb5; /* sapphire */
+  --node-k8s:     #7287fd; /* lavender */
+  --node-group:   #6c6f85; /* group → subtext */
+  --node-copilot: #1e66f5; /* copilot → blue */
+
+  --shadow-1: 0 1px 2px rgba(76, 79, 105, 0.08);
+  --shadow-2: 0 4px 12px rgba(76, 79, 105, 0.10), 0 2px 4px rgba(76, 79, 105, 0.06);
+  --shadow-3: 0 12px 32px rgba(76, 79, 105, 0.14), 0 4px 8px rgba(76, 79, 105, 0.08);
+  --shadow-glow: 0 0 0 1px var(--accent-soft), 0 8px 24px rgba(76, 79, 105, 0.12);
+}
+
+/* ── Accent variants (set on <html> via JS) ──────────────────────── */
+:root[data-accent="mauve"]    { --accent:#c6a0f6; --accent-soft:rgba(198,160,246,.16); --accent-ink:#1e1e2e; }
+:root[data-accent="pink"]     { --accent:#f5bde6; --accent-soft:rgba(245,189,230,.18); --accent-ink:#1e1e2e; }
+:root[data-accent="blue"]     { --accent:#8aadf4; --accent-soft:rgba(138,173,244,.18); --accent-ink:#1e1e2e; }
+:root[data-accent="teal"]     { --accent:#8bd5ca; --accent-soft:rgba(139,213,202,.18); --accent-ink:#1e1e2e; }
+:root[data-accent="peach"]    { --accent:#f5a97f; --accent-soft:rgba(245,169,127,.18); --accent-ink:#1e1e2e; }
+:root[data-accent="green"]    { --accent:#a6da95; --accent-soft:rgba(166,218,149,.18); --accent-ink:#1e1e2e; }
+
+:root[data-theme="light"][data-accent="mauve"]   { --accent:#8839ef; --accent-soft:rgba(136,57,239,.12); --accent-ink:#fff; }
+:root[data-theme="light"][data-accent="pink"]    { --accent:#ea76cb; --accent-soft:rgba(234,118,203,.14); --accent-ink:#fff; }
+:root[data-theme="light"][data-accent="blue"]    { --accent:#1e66f5; --accent-soft:rgba(30,102,245,.12); --accent-ink:#fff; }
+:root[data-theme="light"][data-accent="teal"]    { --accent:#179299; --accent-soft:rgba(23,146,153,.14); --accent-ink:#fff; }
+:root[data-theme="light"][data-accent="peach"]   { --accent:#fe640b; --accent-soft:rgba(254,100,11,.14); --accent-ink:#fff; }
+:root[data-theme="light"][data-accent="green"]   { --accent:#40a02b; --accent-soft:rgba(64,160,43,.14); --accent-ink:#fff; }
+
+/* ── Reset ───────────────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+  overflow: hidden;
+}
+button { font: inherit; color: inherit; }
+input, textarea { font: inherit; color: inherit; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-2);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--surface-3); background-clip: content-box; border: 2px solid transparent; }
+
+/* Focus rings */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-xs); }
+
+/* Selection */
+::selection { background: var(--accent-soft); color: var(--text); }
