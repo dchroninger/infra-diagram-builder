@@ -14,7 +14,7 @@ import type {
   View,
 } from '../types'
 import { isContainer, NODE_TYPES } from '../nodes'
-import { CloudGlyph } from '../canvas/icons'
+import { useMascot, useMascotAnchor } from '../mascot/store'
 import { bezierPath, clientToWorld, portPos } from '../canvas/geometry'
 import { NodeView } from '../canvas/NodeView'
 import { EdgeView } from '../canvas/EdgeView'
@@ -63,6 +63,13 @@ export function Editor({ diagram, brand, theme, toggleTheme, crumbs, onBack, onC
 
   const nodes = diagram.nodes
   const edges = diagram.edges
+
+  const canvasMascotAnchor = useMascotAnchor('canvas-center')
+  const { setActive: setMascotActive } = useMascot()
+  const nodeCount = Object.keys(nodes).length
+  useEffect(() => {
+    setMascotActive(nodeCount === 0 ? 'canvas-center' : 'props-footer')
+  }, [nodeCount, setMascotActive])
 
   const [view, setView] = useState<View>({ x: 0, y: 0, zoom: 1 })
   const [selection, setSelection] = useState<Selection>({ nodes: new Set(), edges: new Set() })
@@ -542,9 +549,7 @@ export function Editor({ diagram, brand, theme, toggleTheme, crumbs, onBack, onC
 
             {Object.keys(nodes).length === 0 && (
               <div className="kn-empty-canvas">
-                <div className="kn-empty-cloud">
-                  <CloudGlyph size={84} interactive />
-                </div>
+                <div ref={canvasMascotAnchor} className="kn-empty-cloud" />
                 <h3>start by dragging a node</h3>
                 <p>pick anything from the left palette, or right-click to add</p>
               </div>

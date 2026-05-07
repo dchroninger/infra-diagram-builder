@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react'
 import type { BrandName } from '../types'
 
 export const IconSun = () => (
@@ -27,83 +26,9 @@ export const IconSearch = () => (
   </svg>
 )
 
-interface CloudGlyphProps {
-  size?: number
-  interactive?: boolean
-}
-
-const IDLE_MS = 20000
-const PUPIL_MAX = 2
-const MOUTH_MAX = 6.4
-const ACTIVE_RADIUS = 280
-const EYE_LERP = 0.35
-const MOUTH_LERP = 0.09
-
-export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const [eyes, setEyes] = useState({ x: 0, y: 0 })
-  const [mouth, setMouth] = useState({ x: 0, y: 0 })
-  const [sleepy, setSleepy] = useState(false)
-
-  useEffect(() => {
-    if (!interactive) return
-    const target = { x: 0, y: 0 }
-    const eyeNow = { x: 0, y: 0 }
-    const mouthNow = { x: 0, y: 0 }
-    let idleId: number | null = null
-    let rafId: number | null = null
-
-    const arm = () => {
-      if (idleId != null) window.clearTimeout(idleId)
-      idleId = window.setTimeout(() => setSleepy(true), IDLE_MS)
-    }
-    const onMove = (e: MouseEvent) => {
-      setSleepy(false)
-      arm()
-      const svg = svgRef.current
-      if (!svg) return
-      const r = svg.getBoundingClientRect()
-      const dx = e.clientX - (r.left + r.width / 2)
-      const dy = e.clientY - (r.top + r.height / 2)
-      const dist = Math.hypot(dx, dy)
-      if (dist > ACTIVE_RADIUS) {
-        target.x = 0
-        target.y = 0
-        return
-      }
-      const k = dist / ACTIVE_RADIUS
-      const a = Math.atan2(dy, dx)
-      target.x = Math.cos(a) * k
-      target.y = Math.sin(a) * k
-    }
-    const onLeave = () => {
-      target.x = 0
-      target.y = 0
-    }
-    const tick = () => {
-      eyeNow.x += (target.x * PUPIL_MAX - eyeNow.x) * EYE_LERP
-      eyeNow.y += (target.y * PUPIL_MAX - eyeNow.y) * EYE_LERP
-      mouthNow.x += (target.x * MOUTH_MAX - mouthNow.x) * MOUTH_LERP
-      mouthNow.y += (target.y * MOUTH_MAX - mouthNow.y) * MOUTH_LERP
-      setEyes({ x: eyeNow.x, y: eyeNow.y })
-      setMouth({ x: mouthNow.x, y: mouthNow.y })
-      rafId = requestAnimationFrame(tick)
-    }
-
-    arm()
-    window.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseleave', onLeave)
-    rafId = requestAnimationFrame(tick)
-    return () => {
-      window.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseleave', onLeave)
-      if (idleId != null) window.clearTimeout(idleId)
-      if (rafId != null) cancelAnimationFrame(rafId)
-    }
-  }, [interactive])
-
+export function CloudGlyph({ size = 32 }: { size?: number }) {
   return (
-    <svg ref={svgRef} width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ overflow: 'visible' }}>
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
       <path
         d="M18 44 C 8 44 6 30 16 28 C 16 18 28 14 34 22 C 42 16 54 22 52 32 C 60 32 60 44 50 44 Z"
         fill="var(--accent-soft)"
@@ -111,33 +36,14 @@ export function CloudGlyph({ size = 32, interactive = false }: CloudGlyphProps) 
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      {sleepy ? (
-        <>
-          <path d="M21 34 Q 24 37 27 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-          <path d="M37 34 Q 40 37 43 34" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-          <path d="M28 40 Q 32 41 36 40" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.8" />
-          <text className="kn-cloud-z kn-cloud-z1" x="50" y="20" fill="var(--accent)" fontSize="9" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
-          <text className="kn-cloud-z kn-cloud-z2" x="56" y="12" fill="var(--accent)" fontSize="6" fontWeight="700" fontFamily="ui-rounded, system-ui, sans-serif">z</text>
-        </>
-      ) : (
-        <>
-          <circle cx={24 + eyes.x} cy={34 + eyes.y} r="2" fill="var(--accent)" />
-          <circle cx={40 + eyes.x} cy={34 + eyes.y} r="2" fill="var(--accent)" />
-          <path
-            d="M28 39 Q 32 42 36 39"
-            transform={`translate(${mouth.x} ${mouth.y})`}
-            stroke="var(--accent)"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            fill="none"
-          />
-        </>
-      )}
+      <circle cx="24" cy="34" r="2" fill="var(--accent)" />
+      <circle cx="40" cy="34" r="2" fill="var(--accent)" />
+      <path d="M28 39 Q 32 42 36 39" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
     </svg>
   )
 }
 
-export function BrandMark({ brand, size = 24, interactive = false }: { brand: BrandName; size?: number; interactive?: boolean }) {
+export function BrandMark({ brand, size = 24 }: { brand: BrandName; size?: number }) {
   if (brand === 'Mochi') {
     return (
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
@@ -159,7 +65,7 @@ export function BrandMark({ brand, size = 24, interactive = false }: { brand: Br
       </svg>
     )
   }
-  return <CloudGlyph size={size} interactive={interactive} />
+  return <CloudGlyph size={size} />
 }
 
 export function LockIcon() {

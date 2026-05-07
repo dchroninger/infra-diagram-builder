@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { selectOpenDiagram, useStore } from './store'
 import { Launch } from './launch/Launch'
 import { Editor } from './editor/Editor'
+import { Mascot } from './mascot/Mascot'
 
 export default function App() {
   const tweaks = useStore((s) => s.tweaks)
@@ -51,6 +52,7 @@ export default function App() {
           onCrumbJump={jumpTo}
         />
       )}
+      <Mascot />
     </div>
   )
 }

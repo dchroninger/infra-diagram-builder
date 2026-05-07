@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../store'
 import type { TemplateKind } from '../store'
 import type { BrandName, Diagram, DiagramId, ThemeMode } from '../types'
 import { CAT_COLOR_VAR, NODE_TYPES } from '../nodes'
-import { BrandMark, CloudGlyph, IconSearch } from '../canvas/icons'
+import { CloudGlyph, IconSearch } from '../canvas/icons'
+import { useMascot, useMascotAnchor } from '../mascot/store'
 
 type Active = 'all' | 'recent' | 'starred' | 'shared' | 'trash' | string
 
@@ -21,6 +22,12 @@ export function Launch({ brand }: Props) {
 
   const [filter, setFilter] = useState('')
   const [active, setActive] = useState<Active>('all')
+
+  const launchAnchor = useMascotAnchor('launch')
+  const { setActive: setMascotActive } = useMascot()
+  useEffect(() => {
+    setMascotActive('launch')
+  }, [setMascotActive])
 
   const list = useMemo(() => {
     let arr = Object.values(diagrams)
@@ -52,7 +59,7 @@ export function Launch({ brand }: Props) {
     <div className="kn-launch">
       <aside className="kn-l-side">
         <div className="kn-l-brand">
-          <BrandMark brand={brand} size={64} interactive />
+          <div ref={launchAnchor} className="kn-l-brand-anchor" />
           <div className="kn-l-brand-name">{brand.toLowerCase()}</div>
         </div>
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { CAT_COLOR_VAR, NODE_CATEGORIES, NODE_TYPES } from '../nodes'
 import { NodeGlyph } from '../NodeGlyph'
-import { CloudGlyph } from '../canvas/icons'
+import { useMascotAnchor } from '../mascot/store'
 import type { DiagramEdge, DiagramNode, EdgeId, EdgeKind, KVPair, NodeId, Selection } from '../types'
 
 type Tab = 'properties' | 'layers'
@@ -37,6 +37,7 @@ export function RightPanel({
   setAnimatedEdges,
   onDrillInto,
 }: Props) {
+  const mascotAnchor = useMascotAnchor('props-footer')
   return (
     <aside className="kn-rpanel">
       <div className="kn-rpanel-tabs">
@@ -63,9 +64,7 @@ export function RightPanel({
           <LayersView nodes={nodes} edges={edges} selection={selection} setSelection={setSelection} />
         )}
       </div>
-      <div className="kn-rpanel-mascot">
-        <CloudGlyph size={64} interactive />
-      </div>
+      <div ref={mascotAnchor} className="kn-rpanel-mascot" />
     </aside>
   )
 }
